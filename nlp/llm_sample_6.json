@@ -1,0 +1,8 @@
+[
+  {"subject": "Tagihan ganda bulan ini", "message": "Saya ditagih dua kali untuk langganan September. Mohon refund salah satunya. Hubungi saya di 0812-3456-7890.", "expected_category": "billing", "llm_category": "billing"},
+  {"subject": "Kartu kredit ditolak", "message": "Pembayaran saya terus gagal padahal saldo cukup. Invoice INV-2026-0912 belum lunas.", "expected_category": "billing", "llm_category": "billing"},
+  {"subject": "Aplikasi error saat upload", "message": "Setiap kali saya upload file PDF muncul error 500 dan halaman berhenti. Sudah coba di Chrome dan Firefox.", "expected_category": "technical", "llm_category": "technical"},
+  {"subject": "Tidak bisa login", "message": "Saya memasukkan password yang benar tapi selalu muncul session expired. Nomor saya +62 821-9876-5432 jika perlu ditelepon.", "expected_category": "technical", "llm_category": "technical"},
+  {"subject": "Jam operasional support", "message": "Apakah tim support tersedia di akhir pekan? Kami ingin tahu jam operasionalnya.", "expected_category": "general", "llm_category": "general"},
+  {"subject": "Saran fitur dark mode", "message": "Apakah ada rencana menambahkan mode gelap? Itu akan sangat membantu tim kami yang bekerja malam hari.", "expected_category": "general", "llm_category": "general"}
+]

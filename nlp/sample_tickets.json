@@ -1,0 +1,14 @@
+[
+  {"customer_email": "rina@example.com", "subject": "Tagihan ganda bulan ini", "message": "Saya ditagih dua kali untuk langganan September. Mohon refund salah satunya. Hubungi saya di 0812-3456-7890.", "expected_category": "billing"},
+  {"customer_email": "budi@example.com", "subject": "Kartu kredit ditolak", "message": "Pembayaran saya terus gagal padahal saldo cukup. Invoice INV-2026-0912 belum lunas.", "expected_category": "billing"},
+  {"customer_email": "finance@pt-maju.co.id", "subject": "Minta faktur pajak", "message": "Mohon kirimkan faktur pajak untuk invoice INV-2026-0831 ke email finance@pt-maju.co.id.", "expected_category": "billing"},
+  {"customer_email": "dewi@example.com", "subject": "Upgrade paket dan selisih biaya", "message": "Kalau saya upgrade ke paket Business, berapa selisih biaya yang harus saya bayar bulan ini?", "expected_category": "billing"},
+  {"customer_email": "andi@example.com", "subject": "Aplikasi error saat upload", "message": "Setiap kali saya upload file PDF muncul error 500 dan halaman berhenti. Sudah coba di Chrome dan Firefox.", "expected_category": "technical"},
+  {"customer_email": "tono@example.com", "subject": "Tidak bisa login", "message": "Saya memasukkan password yang benar tapi selalu muncul 'session expired'. Nomor saya +62 821-9876-5432 jika perlu ditelepon.", "expected_category": "technical"},
+  {"customer_email": "admin@toko-kita.id", "subject": "Notifikasi email tidak terkirim", "message": "Email notifikasi tiket tidak pernah masuk ke inbox kami sejak kemarin, folder spam juga sudah dicek.", "expected_category": "technical"},
+  {"customer_email": "lia@example.com", "subject": "Dashboard sangat lambat", "message": "Halaman dashboard butuh lebih dari 30 detik untuk dimuat sejak update terakhir.", "expected_category": "technical"},
+  {"customer_email": "hendra@example.com", "subject": "Jam operasional support", "message": "Apakah tim support tersedia di akhir pekan? Kami ingin tahu jam operasionalnya.", "expected_category": "general"},
+  {"customer_email": "sari@startup.id", "subject": "Permintaan demo produk", "message": "Kami tertarik dengan layanan Anda dan ingin menjadwalkan demo untuk tim 15 orang. Kontak: sari@startup.id", "expected_category": "general"},
+  {"customer_email": "joko@example.com", "subject": "Saran fitur dark mode", "message": "Apakah ada rencana menambahkan mode gelap? Itu akan sangat membantu tim kami yang bekerja malam hari.", "expected_category": "general"},
+  {"customer_email": "maya@example.com", "subject": "Cara menambah anggota tim", "message": "Bagaimana cara mengundang rekan kerja ke akun organisasi kami?", "expected_category": "general"}
+]

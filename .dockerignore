@@ -1,0 +1,8 @@
+node_modules
+dist
+.env
+.git
+.venv
+nlp/.venv
+nlp/comparison_*.csv
+nlp/__pycache__

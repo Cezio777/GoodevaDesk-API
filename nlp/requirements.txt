@@ -1,0 +1,6 @@
+requests
+torch
+transformers
+sentencepiece
+protobuf
+gliner

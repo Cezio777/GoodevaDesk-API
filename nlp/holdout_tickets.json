@@ -1,0 +1,8 @@
+[
+  {"customer_email": "nina@example.com", "subject": "Harga paket tahunan", "message": "Apakah ada diskon jika kami membayar paket tahunan sekaligus?", "expected_category": "billing"},
+  {"customer_email": "rudi@example.com", "subject": "Refund belum masuk", "message": "Refund yang dijanjikan dua minggu lalu belum masuk ke rekening saya. Nomor order ORD-2026-0450.", "expected_category": "billing"},
+  {"customer_email": "yuni@example.com", "subject": "Gagal reset password", "message": "Link reset password tidak pernah sampai dan tombol kirim ulang tidak merespons.", "expected_category": "technical"},
+  {"customer_email": "eko@example.com", "subject": "Data tidak tersinkron", "message": "Data di aplikasi mobile berbeda dengan di web, perubahan kemarin tidak muncul.", "expected_category": "technical"},
+  {"customer_email": "fitri@example.com", "subject": "Apakah tersedia integrasi Slack", "message": "Kami ingin tahu apakah layanan ini bisa terhubung dengan Slack tim kami.", "expected_category": "general"},
+  {"customer_email": "gita@example.com", "subject": "Terima kasih atas bantuannya", "message": "Kami ingin berterima kasih atas bantuan tim support minggu lalu. Telepon kami di 0857 1234 5678.", "expected_category": "general"}
+]

@@ -1,0 +1,13 @@
+﻿id,subject,expected,llm_category,nli_category,nli_score,entities
+sample-1,Tagihan ganda bulan ini,billing,,billing,0.856,"{""phone"": [""0812-3456-7890""], ""person name"": [""Saya"", ""saya""], ""phone number"": [""0812-3456-7890""]}"
+sample-2,Kartu kredit ditolak,billing,,billing,0.874,{}
+sample-3,Minta faktur pajak,billing,,billing,0.932,"{""email"": [""finance@pt-maju.co.id.""], ""order id"": [""INV-2026-0831""]}"
+sample-4,Upgrade paket dan selisih biaya,billing,,general,0.588,{}
+sample-5,Aplikasi error saat upload,technical,,technical,0.867,{}
+sample-6,Tidak bisa login,technical,,general,0.525,"{""phone number"": [""+62 821-9876-5432""]}"
+sample-7,Notifikasi email tidak terkirim,technical,,general,0.505,{}
+sample-8,Dashboard sangat lambat,technical,,general,0.511,{}
+sample-9,Jam operasional support,general,,technical,0.943,{}
+sample-10,Permintaan demo produk,general,,general,0.875,"{""email"": [""sari@startup.id""], ""person name"": [""sari""]}"
+sample-11,Saran fitur dark mode,general,,general,0.78,{}
+sample-12,Cara menambah anggota tim,general,,general,0.925,{}
