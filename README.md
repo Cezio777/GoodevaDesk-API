@@ -1,131 +1,305 @@
-# GoodevaDesk - AI-Powered Ticket Management API
+# GoodevaDesk — Ticket Management API
 
-GoodevaDesk adalah sistem backend manajemen tiket pelanggan (*Helpdesk*) multi-tenant yang dilengkapi dengan klasifikasi AI otomatis dan sistem *caching* tingkat lanjut. Proyek ini dibangun menggunakan **NestJS, Prisma, PostgreSQL**, dan **Redis**, serta mengintegrasikan LLM untuk analisis kontekstual tiket.
+REST API internal untuk manajemen tiket customer support dengan klasifikasi otomatis via LLM, Redis caching, dan Python NLP evaluator.
 
-## 🚀 Fitur Utama
+## Stack
 
-- **Multi-Tenant Architecture**: Isolasi data berbasis `organization_id` menggunakan `ApiKeyGuard` dan kustom *decorator*.
-- **High-Availability AI Integration**: Menggunakan Google Gemini sebagai LLM utama dengan mekanisme *fallback* ke Groq jika terjadi *rate-limit* atau kegagalan API.
-- **Smart Redis Caching**: Menghemat biaya API (LLM) dengan melakukan *caching* pada pesan identik menggunakan normalisasi teks dan MD5/SHA256 hashing.
-- **Python NLP Evaluator**: Pipeline eksperimental menggunakan GLiNER (NER) dan mDeBERTa (Zero-shot NLI) untuk membandingkan dan mengevaluasi hasil klasifikasi LLM.
-- **Fault-Tolerant**: Jika seluruh layanan pihak ketiga (LLM/Cache) *down*, sistem tetap memproses dan menyimpan tiket dengan aman (graceful degradation).
+| Layer | Teknologi |
+|---|---|
+| Backend | NestJS + TypeScript |
+| ORM | Prisma |
+| Database | PostgreSQL |
+| Cache | Redis (ioredis) |
+| LLM Utama | Google Gemini (`gemini-3.8-flash`) |
+| LLM Fallback | Groq (`openai/gpt-oss-20b`) via OpenAI SDK |
+| Containerization | Docker + Docker Compose |
+| Python NLP | GLiNER + mDeBERTa (Zero-shot NLI) |
 
 ---
 
-## 🏗 Arsitektur & Alur Sistem
+## Cara Menjalankan (Docker — Direkomendasikan)
 
-```text
-[Client] -> POST /tickets
-   ↓
-[AuthGuard] -> Validasi `x-api-key` -> Ekstrak `organization_id`
-   ↓
-[Redis Cache] -> Cek Hash(Subject + Message). 
-   ├── [Hit]  -> Kembalikan hasil dari cache.
-   └── [Miss] -> Panggil [AiService]
-                   ├── Coba Gemini 3.8 Flash
-                   ├── (Jika Gagal) -> Fallback ke Groq (gpt-oss-20b)
-                   └── (Jika Gagal) -> Return `null` (Fallback safety)
-   ↓
-[PostgreSQL] -> Simpan Tiket (beserta hasil AI/null)
-   ↓
-[Response] -> 201 Created
-```
+**Prasyarat:** Docker Desktop terinstall dan running.
 
-## 🛠 Teknologi Utama
-Backend: NestJS, TypeScript, Prisma ORM
-
-Database: PostgreSQL
-
-Cache: Redis (via ioredis)
-
-AI/LLM: Google Generative AI SDK, OpenAI SDK (untuk Groq)
-
-Containerization: Docker & Docker Compose
-
-NLP (Opsional): Python 3, HuggingFace (gliner, transformers)
-
-##    ⚙️ Cara Menjalankan Aplikasi
-Anda dapat menjalankan aplikasi ini secara lokal menggunakan Docker Compose tanpa perlu menginstal PostgreSQL atau Redis di mesin Anda.
-
-1. Persiapan Environment
 ```bash
+# 1. Salin file environment
 cp .env.example .env
-# Buka file .env dan masukkan GEMINI_API_KEY dan GROQ_API_KEY Anda
+
+# 2. Isi nilai berikut di .env:
+#    GEMINI_API_KEY=...
+#    GROQ_API_KEY=...
+
+# 3. Jalankan seluruh stack
+docker compose up --build
 ```
 
-2. Jalankan dengan Docker Compose
+Docker Compose akan otomatis:
+- Menjalankan PostgreSQL dan Redis
+- Menjalankan migrasi database
+- Seed 2 organisasi demo
+- Menjalankan API di port 3000
+
+**API siap diakses di** `http://localhost:3000`
+
+---
+
+## Cara Menjalankan (Lokal tanpa Docker)
+
+**Prasyarat:** Node.js 20+, PostgreSQL, Redis lokal atau Upstash.
+
 ```bash
-Perintah ini akan mem-build image NestJS, menjalankan container PostgreSQL dan Redis, serta otomatis menjalankan migrasi dan seeding database.
-docker compose up --build -d
+npm install
+cp .env.example .env
+# Isi semua nilai di .env
+
+npx prisma migrate dev
+npx ts-node prisma/seed.ts
+npm run start:dev
 ```
 
-3. Uji Coba API (Seeding Default)
-Database telah di-seed dengan dua organisasi. Anda dapat menguji endpoint menggunakan cURL atau Postman:
+---
 
-Acme Corp API Key: sk_live_123456789
+## API Key Demo (hasil seed)
 
-Globex Inc API Key: sk_live_987654321
+| Organisasi | API Key |
+|---|---|
+| Acme Corp | `sk_live_123456789` |
+| Globex Inc | `sk_live_987654321` |
 
-Contoh Request (POST):
+Kirim via header: `x-api-key: sk_live_123456789`
+
+---
+
+## Endpoint
+
+| Method | Endpoint | Fungsi |
+|---|---|---|
+| POST | `/tickets` | Buat tiket baru → klasifikasi LLM + cache |
+| GET | `/tickets` | List tiket (filter: `status`, `category`, pagination) |
+| GET | `/tickets/:id` | Detail tiket (404 jika bukan milik org) |
+| PATCH | `/tickets/:id/status` | Update status tiket |
+
+### Contoh Request
+
+**POST /tickets:**
 ```bash
 curl -X POST http://localhost:3000/tickets \
   -H "x-api-key: sk_live_123456789" \
   -H "Content-Type: application/json" \
   -d '{
     "customer_email": "user@example.com",
-    "subject": "Gagal login",
-    "message": "Saya tidak bisa masuk ke akun saya, selalu muncul error 500."
+    "subject": "Kartu kredit ditolak",
+    "message": "Pembayaran saya terus gagal padahal saldo cukup."
   }'
 ```
 
-## 🧠 Keputusan Desain & Strategi Implementasi
-1. Strategi Provider LLM & Error Handling
-Saya memilih Google Gemini (gemini-3.8-flash) sebagai provider utama karena kapabilitas reasoning yang cepat. Namun, karena model gratis sering mengalami kendala rate-limiting (429) atau server overload (503), saya mengimplementasikan Groq (gpt-oss-20b) via OpenAI SDK sebagai sistem fallback.
-
-Error Handling: Jika kedua LLM mengalami timeout atau gagal mem-parsing JSON, sistem menangkap exception (try-catch) dan me-return category: null. Tiket akan tetap tersimpan di database untuk diproses agen manual, memastikan tidak ada data pelanggan yang hilang.
-
-Contoh Prompt yang Digunakan:
+**GET /tickets dengan filter:**
 ```bash
+curl "http://localhost:3000/tickets?status=open&category=billing&page=1&limit=20" \
+  -H "x-api-key: sk_live_123456789"
+```
+
+**PATCH status:**
+```bash
+curl -X PATCH http://localhost:3000/tickets/<ID>/status \
+  -H "x-api-key: sk_live_123456789" \
+  -H "Content-Type: application/json" \
+  -d '{"status": "in_progress"}'
+```
+
+---
+
+## Alur Request
+
+```
+Client → POST /tickets
+    ↓
+ApiKeyGuard
+  → Validasi header x-api-key
+  → Cari Organization di database
+  → Inject organization_id ke request
+    ↓
+TicketService.create()
+    ↓
+Redis GET (hash subject + message)
+  ├── HIT  → pakai hasil cache, skip LLM
+  └── MISS → panggil AiService
+                ↓
+              Coba Gemini (gemini-3.8-flash)
+                ├── Berhasil → simpan ke cache, lanjut
+                └── Gagal (503/429/timeout)
+                      ↓
+                    Coba Groq (openai/gpt-oss-20b)
+                      ├── Berhasil → simpan ke cache, lanjut
+                      └── Gagal → category: null (tiket tetap tersimpan)
+    ↓
+Prisma → simpan tiket ke PostgreSQL
+    ↓
+Response 201 Created
+```
+
+---
+
+## Keputusan Desain
+
+### 1. Provider LLM: Gemini + Groq Fallback
+
+Saya memilih **Google Gemini** (`gemini-3.8-flash`) sebagai provider utama karena:
+- Kemampuan memahami konteks dan nuansa bahasa Indonesia sangat baik
+- `suggested_reply` yang dihasilkan relevan dan menggunakan bahasa yang sama dengan pesan pelanggan
+- SDK resmi tersedia di npm (`@google/generative-ai`)
+- Free tier tersedia untuk prototyping
+
+Namun model gratis rentan terhadap `503 Service Unavailable` saat demand tinggi. Oleh karena itu saya menambahkan **Groq** (`openai/gpt-oss-20b`) sebagai fallback otomatis menggunakan OpenAI SDK dengan `baseURL` diarahkan ke endpoint Groq. Fallback ini transparan: jika Gemini gagal, Groq mengambil alih tanpa mengubah struktur response.
+
+**Contoh prompt yang digunakan:**
+```
 Anda adalah asisten AI untuk layanan pelanggan.
 Analisis tiket berikut:
 Subjek: "{subject}"
 Pesan: "{message}"
 
 Tugas Anda:
-1. Klasifikasikan kategori tiket secara ketat ke salah satu dari: "billing", "technical", atau "general".
-2. Buat draf balasan singkat untuk membantu agen (suggested_reply) dalam bahasa yang sama dengan pesan pelanggan.
+1. Klasifikasikan kategori tiket secara ketat ke salah satu dari:
+   "billing", "technical", atau "general".
+2. Buat draf balasan singkat (suggested_reply) dalam bahasa
+   yang sama dengan pesan pelanggan.
 
-PENTING: Jawab HANYA menggunakan format JSON murni tanpa tambahan teks...
+PENTING: Jawab HANYA dalam format JSON murni tanpa markdown:
+{
+  "category": "...",
+  "suggested_reply": "..."
+}
 ```
 
-2. Strategi Caching (Redis)
-Untuk mengurangi latensi LLM dan menghemat cost/quota API, saya mengimplementasikan caching dengan ioredis.
+**Error handling LLM:**
 
-Cache Key: ticket_cache:{organizationId}:{hash}. Kombinasi subject dan message dinormalisasi (trim, lowercase, penghapusan spasi ganda) lalu di-hash (MD5/SHA256).
+| Kondisi | Perilaku |
+|---|---|
+| `GEMINI_API_KEY` tidak diset | Log warning, lewati AI, tiket tersimpan dengan `null` |
+| Gemini 503 / 429 / timeout | Otomatis fallback ke Groq |
+| Groq juga gagal | Log error, tiket tersimpan dengan `category: null` |
+| Response bukan JSON valid | `JSON.parse` gagal, fallback ke `null` |
+| `category` di luar nilai valid | Diset ke `"general"` |
 
-TTL: 1 Hari (86400 detik). Hanya respons LLM yang valid yang disimpan di dalam cache. Jika Redis down, operasi menggunakan try-catch akan melanjutkannya ke LLM (best-effort).
+Tiket **selalu tersimpan** meski seluruh LLM gagal. Status tidak pernah stuck.
 
-3. Eksperimen NLP (Bagian D)
-Terdapat script Python di folder nlp/ yang mengimplementasikan pendekatan ekstraksi entitas dan Zero-Shot Classification (NLI) menggunakan model mDeBERTa.
+---
 
-Hasil Evaluasi: NLI mencapai akurasi 83% (5/6) jika dibandingkan dengan LLM dan human label.
+### 2. Strategi Redis Caching
 
-Temuan: Model NLI memiliki tingkat kepercayaan yang sangat presisi (akurasi 88%) jika confidence score berada di atas >= 0.6. Ini membuka peluang penggunaan model NLI lokal (tanpa biaya LLM) sebagai filter tahap pertama di masa depan.
+**Cache key:**
+```
+ticket_cache:{organizationId}:{sha256(normalize(subject) + "\0" + normalize(message))}
+```
 
-Cara Menjalankan Script NLP:
+**Keputusan desain:**
+- `organizationId` diikutkan dalam key → organisasi A tidak pernah mendapat hasil cache organisasi B (isolasi tenant)
+- Normalisasi teks (trim, lowercase, spasi ganda → satu) → menangani tiket "sangat mirip" sesuai spesifikasi
+- Hanya hasil LLM valid yang di-cache → kegagalan LLM tidak ter-cache, request berikutnya akan mencoba ulang
+- TTL 1 hari (86.400 detik)
+- Seluruh operasi Redis dibungkus `try/catch` → Redis down tidak mematikan endpoint, API fallback ke LLM
+
+---
+
+### 3. Skema Data
+
+**Organization** — analog tenant sederhana:
+```
+id (UUID) | name | api_key (unique)
+```
+
+**Ticket** — tiket customer support:
+```
+id (UUID) | organization_id (FK) | customer_email
+subject | message | category (nullable)
+suggested_reply (nullable) | status (open/in_progress/closed)
+created_at
+```
+
+Index `(organization_id, status)` ditambahkan untuk query filter yang efisien.
+
+---
+
+### 4. Keamanan Tenant
+
+Setiap query di-scope ke `organization_id` yang didapat dari API key yang sudah divalidasi. Akses ke tiket organisasi lain menghasilkan `404` (bukan `403`) untuk mencegah kebocoran informasi keberadaan tiket (*security through obscurity*).
+
+Dibuktikan dengan e2e test (`npm run test:e2e`, **7/7 lulus**):
+- Org B tidak bisa membaca tiket Org A
+- Org B tidak bisa mengubah status tiket Org A
+- Input tidak valid menghasilkan 400, bukan 500
+
+---
+
+## Bagian D — Python NLP (Opsional)
+
+Script `nlp/analyze_tickets.py` melakukan dua hal:
+
+1. **Entity extraction** dari pesan tiket: email, nomor telepon Indonesia, dan nomor order menggunakan regex + GLiNER
+2. **Klasifikasi zero-shot (NLI)** sebagai pembanding terhadap hasil Gemini, tanpa memanggil API berbayar
+
+### Setup
+
 ```bash
 cd nlp
 python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
+.venv\Scripts\activate    # Windows
 pip install -r requirements.txt
-python analyze_tickets.py --source file
 ```
 
-## 📈 Rencana Peningkatan (Future Improvements)
-Jika saya memiliki waktu ekstra untuk proyek ini, beberapa hal yang akan saya tambahkan:
+### Menjalankan
 
-Message Broker (RabbitMQ/Kafka): Memindahkan proses pemanggilan LLM ke background job / worker (Asynchronous processing) agar latensi endpoint POST /tickets menjadi < 100ms.
+```bash
+# Mode file (gunakan data berlabel, tanpa server)
+python analyze_tickets.py --source file --file llm_sample_6.json --label-set v2
 
-Unit Testing & Coverage: Menambahkan unit test spesifik menggunakan Jest untuk menyimulasikan kegagalan LLM dan memvalidasi logika fallback tanpa memanggil API pihak ketiga.
+# Mode API (bandingkan Gemini vs NLI, server harus berjalan)
+set API_KEY=sk_live_123456789
+python analyze_tickets.py --source api --label-set v2
+```
 
-Vector Database / RAG: Menyimpan knowledge base perusahaan ke dalam database vektor agar suggested_reply yang dihasilkan LLM bisa merujuk langsung ke dokumentasi internal (SOP) perusahaan.
+### Hasil Evaluasi (6 tiket berlabel, label set v2)
+
+| Metrik | Hasil |
+|---|---|
+| LLM (Gemini) vs label manual | **6/6 (100%)** |
+| NLI vs label manual | 5/6 (83%) |
+| LLM vs NLI (sepakat) | 5/6 (83%) |
+| NLI skor ≥ 0.6 | 4/5 (80%) |
+| NLI skor < 0.6 | 1/1 (100%) |
+
+**Temuan utama:**
+- NLI bekerja sangat baik (88%) saat confidence score ≥ 0.6
+- Kasus berbeda: *"Jam operasional support"* → NLI prediksi `technical` (skor 0.819), padahal label manual dan Gemini sepakat `general`. Kata "support" dalam kalimat pendek tanpa konteks memicu label teknis di model NLI
+- **Kesimpulan:** Gemini unggul dalam memahami konteks dan nuansa. NLI zero-shot layak sebagai filter awal murah tanpa biaya API, tapi belum bisa menggantikan LLM untuk kasus ambigu
+
+> ⚠️ Evaluasi dilakukan pada 6 tiket saja. Angka ini bersifat indikatif, bukan benchmark statistik.
+
+---
+
+## Menjalankan Test
+
+```bash
+npm run test:e2e
+```
+
+Output yang diharapkan:
+```
+Test Suites: 2 passed, 2 total
+Tests:       7 passed, 7 total
+```
+
+---
+
+## Rencana Pengembangan
+
+Jika ada waktu lebih, hal yang akan saya tambahkan:
+
+- **Async LLM processing** — pindahkan pemanggilan LLM ke background job (Bull/BullMQ) agar `POST /tickets` merespons < 100ms dan LLM berjalan asinkron
+- **Rate limiting per API key** — mencegah satu organisasi memonopoli kuota LLM (`@nestjs/throttler`)
+- **Swagger UI** — dokumentasi endpoint interaktif (`@nestjs/swagger`)
+- **Endpoint `/health`** — mengecek koneksi DB dan Redis untuk monitoring
+- **Semantic caching** — gunakan embedding untuk mendeteksi tiket "sangat mirip" secara semantik, bukan hanya hash teks
+- **Unit test** — mock LLM dan Redis untuk test cache hit/miss, LLM gagal, Redis gagal secara terisolasi
+- **GitHub Actions** — CI pipeline untuk lint dan test otomatis di setiap push
