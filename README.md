@@ -29,9 +29,9 @@ GoodevaDesk adalah sistem backend manajemen tiket pelanggan (*Helpdesk*) multi-t
 [PostgreSQL] -> Simpan Tiket (beserta hasil AI/null)
    ↓
 [Response] -> 201 Created
-'''
+```
 
-🛠 Teknologi Utama
+## 🛠 Teknologi Utama
 Backend: NestJS, TypeScript, Prisma ORM
 
 Database: PostgreSQL
@@ -44,7 +44,7 @@ Containerization: Docker & Docker Compose
 
 NLP (Opsional): Python 3, HuggingFace (gliner, transformers)
 
-⚙️ Cara Menjalankan Aplikasi
+##    ⚙️ Cara Menjalankan Aplikasi
 Anda dapat menjalankan aplikasi ini secara lokal menggunakan Docker Compose tanpa perlu menginstal PostgreSQL atau Redis di mesin Anda.
 
 1. Persiapan Environment
@@ -72,7 +72,7 @@ curl -X POST http://localhost:3000/tickets \
     "message": "Saya tidak bisa masuk ke akun saya, selalu muncul error 500."
   }'
 
-🧠 Keputusan Desain & Strategi Implementasi
+## 🧠 Keputusan Desain & Strategi Implementasi
 1. Strategi Provider LLM & Error Handling
 Saya memilih Google Gemini (gemini-3.8-flash) sebagai provider utama karena kapabilitas reasoning yang cepat. Namun, karena model gratis sering mengalami kendala rate-limiting (429) atau server overload (503), saya mengimplementasikan Groq (gpt-oss-20b) via OpenAI SDK sebagai sistem fallback.
 
@@ -111,7 +111,7 @@ source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 python analyze_tickets.py --source file
 
-📈 Rencana Peningkatan (Future Improvements)
+## 📈 Rencana Peningkatan (Future Improvements)
 Jika saya memiliki waktu ekstra untuk proyek ini, beberapa hal yang akan saya tambahkan:
 
 Message Broker (RabbitMQ/Kafka): Memindahkan proses pemanggilan LLM ke background job / worker (Asynchronous processing) agar latensi endpoint POST /tickets menjadi < 100ms.
