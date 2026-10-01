@@ -217,6 +217,13 @@ suggested_reply (nullable) | status (open/in_progress/closed)
 created_at
 ```
 
+Skema dirancang menggunakan Prisma ORM dengan fokus pada keamanan dan efisiensi:
+
+1. **Keamanan Multi-Tenancy:** Setiap tiket wajib memiliki relasi `organization_id`. Ini memastikan isolasi data absolut (pengguna Organisasi A tidak bisa mengakses tiket Organisasi B).
+2. **Pencegahan Celah IDOR:** Menggunakan **UUID** untuk ID Tiket dan Organisasi dibandingkan *auto-increment integer*, sehingga ID tidak bisa ditebak secara berurutan.
+3. **Persistent Storage AI:** Tabel tiket memiliki kolom `category` dan `suggested_reply` untuk menyimpan hasil LLM. Ini memangkas biaya API dan mempercepat *response time* API saat melakukan GET tiket.
+4. **Audit Trail:** Terdapat kolom `created_at` secara default untuk integritas pelacakan riwayat masuknya tiket.
+
 Index `(organization_id, status)` ditambahkan untuk query filter yang efisien.
 
 ---
@@ -280,16 +287,6 @@ python analyze_tickets.py --source file --file llm_sample_6.json --label-set v2
 set API_KEY=sk_live_123456789
 python analyze_tickets.py --source api --label-set v2
 ```
-
-### Hasil Evaluasi (6 tiket berlabel, label set v2)
-
-| Metrik | Hasil |
-|---|---|
-| LLM (Gemini) vs label manual | **6/6 (100%)** |
-| NLI vs label manual | 5/6 (83%) |
-| LLM vs NLI (sepakat) | 5/6 (83%) |
-| NLI skor ≥ 0.6 | 4/5 (80%) |
-| NLI skor < 0.6 | 1/1 (100%) |
 
 **Temuan utama:**
 - NLI bekerja sangat baik (88%) saat confidence score ≥ 0.6
