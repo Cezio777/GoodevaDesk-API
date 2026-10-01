@@ -132,10 +132,10 @@ Redis GET (hash subject + message)
                     Coba Groq (openai/gpt-oss-20b)
                       ├── Berhasil → simpan ke cache, lanjut
                       └── Gagal → category: null (tiket tetap tersimpan)
-    ↓
-Prisma → simpan tiket ke PostgreSQL
-    ↓
-Response 201 Created
+                                    ↓
+                                 Prisma → simpan tiket ke PostgreSQL
+                                    ↓
+                                 Response 201 Created
 ```
 
 ---
